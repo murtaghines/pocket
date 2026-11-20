@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
@@ -62,7 +62,7 @@ async function pollForImportSuccess(
   userId: string,
   fileHash: string,
 ): Promise<{ stats: { newTransactions: number; duplicatesIgnored: number }; monthsDistribution: Record<string, { new: number; duplicates: number }>; skippedMonths: never[] } | null> {
-  const delays = [2000, 3000, 4000, 5000, 6000]; // ~20s total
+  const delays = [2000, 4000, 6000, 8000, 10000, 10000, 10000, 10000, 10000, 10000]; // ~90s total
   for (const wait of delays) {
     await new Promise((r) => setTimeout(r, wait));
     const { data: row } = await supabase
@@ -131,6 +131,7 @@ export function useMonthlyFileUpload() {
     });
 
     const isCancelled = () => cancelledIdsRef.current.has(uploadFile.id);
+    let uploadedStoragePath: string | null = null;
 
     try {
       const extracted = await extractFileContent(uploadFile.file);
@@ -202,6 +203,9 @@ export function useMonthlyFileUpload() {
       if (uploadError) {
         throw new Error(t('error.couldNotUpload'));
       }
+      uploadedStoragePath = filePath;
+
+      if (isCancelled()) return;
 
       if (isCancelled()) return;
 
@@ -469,6 +473,21 @@ export function useMonthlyFileUpload() {
         description: error.message || t('error.couldNotProcess'),
         variant: "destructive",
       });
+
+      // Clean up orphan storage file if no import record was created for it
+      if (uploadedStoragePath) {
+        try {
+          const { count } = await supabase
+            .from("imports")
+            .select("id", { count: "exact", head: true })
+            .eq("file_storage_url", uploadedStoragePath);
+          if (!count) {
+            await supabase.storage.from("financial-files").remove([uploadedStoragePath]);
+          }
+        } catch {
+          // Best-effort cleanup
+        }
+      }
     } finally {
       cancelledIdsRef.current.delete(uploadFile.id);
     }
@@ -749,6 +768,19 @@ export function useMonthlyFileUpload() {
       arr.some((f) => f.status === "processing" || f.status === "pending"),
     );
   }, [pendingFilesByMonth]);
+
+  // Warn the user before closing the tab while files are being processed
+  const hasInFlightFiles = Object.values(pendingFilesByMonth).some((arr) =>
+    arr.some((f) => f.status === "processing" || f.status === "pending")
+  );
+  useEffect(() => {
+    if (!hasInFlightFiles) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasInFlightFiles]);
 
   return {
     pendingFilesByMonth,

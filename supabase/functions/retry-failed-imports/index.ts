@@ -31,6 +31,24 @@ serve(async (req) => {
 
   try {
     const cutoff = new Date(Date.now() - MAX_AGE_HOURS * 60 * 60 * 1000).toISOString();
+    const stuckCutoff = new Date(Date.now() - 30 * 60 * 1000).toISOString(); // 30 min ago
+
+    // Mark stuck UPLOADED/PARSED imports as FAILED so the retry logic picks them up.
+    // These are imports where the edge function crashed (OOM, timeout, Deno killed)
+    // and even the catch block didn't execute.
+    const { data: stuckImports, error: stuckError } = await supabase
+      .from('imports')
+      .update({ status: 'FAILED', error_message: 'Processing timed out or crashed' })
+      .in('status', ['UPLOADED', 'PARSED'])
+      .lt('uploaded_at', stuckCutoff)
+      .gte('uploaded_at', cutoff)
+      .select('id');
+
+    if (stuckError) {
+      console.error('[retry-failed-imports] Error marking stuck imports:', stuckError);
+    } else if (stuckImports && stuckImports.length > 0) {
+      console.log(`[retry-failed-imports] Marked ${stuckImports.length} stuck import(s) as FAILED`);
+    }
 
     // Find retryable imports: FAILED or PARTIAL, < 24h old, < 3 retries
     const { data: candidates, error: queryError } = await supabase
