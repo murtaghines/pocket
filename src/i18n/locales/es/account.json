@@ -291,7 +291,8 @@
       "period": "Período",
       "from": "Desde",
       "to": "Hasta",
-      "error": "Error"
+      "error": "Error",
+      "openInTransactions": "Ver en Movimientos"
     },
     "actions": {
       "view": "Ver contenido",

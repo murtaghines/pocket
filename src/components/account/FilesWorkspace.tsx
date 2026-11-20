@@ -1,11 +1,11 @@
 import { useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Eye, Download, Archive, ArchiveRestore, Trash2, ChevronRight, AlertTriangle, RotateCcw, Loader2 } from "lucide-react";
+import { Eye, Download, Archive, ArchiveRestore, Trash2, ChevronRight, AlertTriangle, RotateCcw, Loader2, Pencil, ExternalLink, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useImports, type Import } from "@/hooks/useImports";
-import { importTitle, useImportSummary, getImportDownloadUrl, monthsInRange } from "@/hooks/useImportFile";
+import { importTitle, useImportSummary, getImportDownloadUrl, monthsInRange, useRenameImport, useReassignImport } from "@/hooks/useImportFile";
 import { ImportSplitDialog } from "@/components/imports/ImportSplitDialog";
 import { AccountSelectDialog } from "@/components/imports/AccountSelectDialog";
 import { getAccountDisplayName } from "@/lib/accountColors";
@@ -100,10 +100,13 @@ function fileStatus(f: Import): { key: string; color: string; actionable?: boole
 // Expanded detail panel (Carga + Resumen)
 // ---------------------------------------------------------------------------
 
-function FileExpandedPanel({ file, accountName, locale }: {
+function FileExpandedPanel({ file, accountName, locale, accounts, onAccountChange, onOpenInTransactions }: {
   file: Import;
   accountName: string;
   locale: string;
+  accounts: Array<{ id: string; account_role: string; institution: string; name: string }>;
+  onAccountChange: (importId: string, accountId: string) => void;
+  onOpenInTransactions: (month: string) => void;
 }) {
   const { t } = useTranslation("account");
   const { formatDateTime, formatDate } = useLocalization();
@@ -112,6 +115,11 @@ function FileExpandedPanel({ file, accountName, locale }: {
   const period = summary?.firstDate && summary.lastDate
     ? monthsInRange(summary.firstDate, summary.lastDate, locale)
     : "—";
+
+  const targetMonth = file.target_month?.substring(0, 7)
+    || (summary?.firstDate ? summary.firstDate.substring(0, 7) : null);
+
+  const cashAccounts = accounts.filter((a) => a.account_role === "CASH");
 
   const MetaRow = ({ label, value, numeric }: { label: string; value: React.ReactNode; numeric?: boolean }) => (
     <div className="flex items-baseline justify-between gap-4 border-b border-border/40 py-[6px] last:border-0">
@@ -126,6 +134,23 @@ function FileExpandedPanel({ file, accountName, locale }: {
   );
 
   const hasError = (file.status === "FAILED" || file.status === "PARTIAL") && file.error_message;
+
+  const accountSelector = file.domain !== "INVESTING" && cashAccounts.length > 0 ? (
+    <select
+      value={file.account_id || ""}
+      onChange={(e) => onAccountChange(file.id, e.target.value)}
+      disabled={!!file.locked}
+      className={cn(
+        "h-6 w-full max-w-[180px] rounded-md border border-border/60 bg-card px-2 text-right text-[12.5px] font-semibold text-foreground",
+        file.locked && "opacity-50 cursor-not-allowed",
+      )}
+    >
+      <option value="" disabled>{t("files.pickAccount")}</option>
+      {cashAccounts.map((a) => (
+        <option key={a.id} value={a.id}>{getAccountDisplayName(a)}</option>
+      ))}
+    </select>
+  ) : <span className="text-[12.5px] font-semibold text-foreground">{accountName}</span>;
 
   return (
     <div className="space-y-3 px-1 pb-4 pt-1">
@@ -154,7 +179,7 @@ function FileExpandedPanel({ file, accountName, locale }: {
             {t("files.detail.upload", "Upload")}
           </p>
           <MetaRow label={t("files.detail.uploadedAt", "Uploaded on")} value={formatDateTime(file.uploaded_at)} />
-          <MetaRow label={t("files.detail.account", "Account")} value={accountName} />
+          <MetaRow label={t("files.detail.account", "Account")} value={accountSelector} />
           <MetaRow label={t("files.detail.transactionCount", "Transactions")} value={isLoading ? "…" : (summary?.total ?? 0)} numeric />
         </div>
         <div className="rounded-xl bg-muted/50 px-4 py-3.5">
@@ -166,6 +191,16 @@ function FileExpandedPanel({ file, accountName, locale }: {
           <MetaRow label={t("files.detail.to", "To")} value={isLoading ? "…" : (summary?.lastDate ? formatDate(summary.lastDate) : "—")} />
         </div>
       </div>
+      {targetMonth && file.status === "NORMALIZED" && (
+        <button
+          type="button"
+          onClick={() => onOpenInTransactions(targetMonth)}
+          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-medium text-primary transition-colors hover:bg-accent"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+          {t("files.detail.openInTransactions", "Open in Transactions")}
+        </button>
+      )}
     </div>
   );
 }
@@ -178,12 +213,17 @@ export function FilesWorkspace() {
   const { t } = useTranslation("account");
   const { t: tc } = useTranslation("common");
   const { t: ti } = useTranslation("imports");
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { accounts } = useAccounts();
   const { imports, isLoading, deleteImport, isDeleting } = useImports();
   const setArchived = useSetImportArchived();
+  const renameImport = useRenameImport();
+  const reassignImport = useReassignImport();
   const { addFiles, pendingFilesByMonth, cancelFile, isProcessingAny, retryImport, retryingImportIds } = useMonthlyFileUpload();
   const [showArchived, setShowArchived] = useState(false);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingUploadFiles, setPendingUploadFiles] = useState<File[]>([]);
@@ -260,6 +300,35 @@ export function FilesWorkspace() {
     deleteImport(id);
   };
 
+  const handleRenameStart = (f: Import) => {
+    setRenamingId(f.id);
+    setRenameValue(importTitle(f));
+  };
+
+  const handleRenameConfirm = async () => {
+    if (!renamingId) return;
+    try {
+      await renameImport(renamingId, renameValue);
+      toast.success(t("files.renamed"));
+    } catch {
+      toast.error(t("files.renameError"));
+    }
+    setRenamingId(null);
+  };
+
+  const handleReassign = async (importId: string, accountId: string) => {
+    try {
+      await reassignImport(importId, accountId);
+      toast.success(t("files.moved", { name: accountName(accountId) }));
+    } catch {
+      toast.error(t("files.moveError"));
+    }
+  };
+
+  const handleOpenInTransactions = (month: string) => {
+    navigate(`/my-data?tab=transactions&month=${month}`);
+  };
+
   const handleUploadPicked = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
@@ -308,7 +377,35 @@ export function FilesWorkspace() {
           <FileBadge label={label} />
 
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[13.5px] font-semibold text-foreground" title={title}>{title}</p>
+            {renamingId === f.id ? (
+              <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                <input
+                  autoFocus
+                  value={renameValue}
+                  onChange={(e) => setRenameValue(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleRenameConfirm(); if (e.key === "Escape") setRenamingId(null); }}
+                  className="h-6 min-w-0 flex-1 rounded border border-primary/40 bg-card px-1.5 text-[13.5px] font-semibold text-foreground outline-none focus:ring-1 focus:ring-primary/30"
+                />
+                <ActionBtn title={t("files.rename")} onClick={handleRenameConfirm}>
+                  <Check className="h-3.5 w-3.5 text-success" />
+                </ActionBtn>
+                <ActionBtn title={tc("cancel")} onClick={() => setRenamingId(null)}>
+                  <X className="h-3.5 w-3.5" />
+                </ActionBtn>
+              </div>
+            ) : (
+              <div className="group/title flex items-center gap-1">
+                <p className="truncate text-[13.5px] font-semibold text-foreground" title={title}>{title}</p>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handleRenameStart(f); }}
+                  className="hidden h-5 w-5 shrink-0 items-center justify-center rounded text-muted-foreground/50 transition-colors hover:text-primary group-hover/title:flex"
+                  title={t("files.rename")}
+                >
+                  <Pencil className="h-3 w-3" />
+                </button>
+              </div>
+            )}
             <p className="mt-0.5 truncate text-[11.5px] text-muted-foreground">
               {accName} · {f.transactions_count ?? 0} {t("files.txShort", "tx")}
             </p>
@@ -392,6 +489,9 @@ export function FilesWorkspace() {
             file={f}
             accountName={accName}
             locale={locale}
+            accounts={accounts}
+            onAccountChange={handleReassign}
+            onOpenInTransactions={handleOpenInTransactions}
           />
         )}
       </div>

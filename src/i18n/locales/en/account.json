@@ -291,7 +291,8 @@
       "period": "Period",
       "from": "From",
       "to": "To",
-      "error": "Error"
+      "error": "Error",
+      "openInTransactions": "Open in Transactions"
     },
     "actions": {
       "view": "View contents",
