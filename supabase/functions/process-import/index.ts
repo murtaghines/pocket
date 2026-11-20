@@ -36,6 +36,7 @@ serve(async (req) => {
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  let importId: string | null = null;
 
   try {
     setRequestStartTime(Date.now());
@@ -287,7 +288,7 @@ serve(async (req) => {
       throw new Error(`Failed to create import: ${importError.message}`);
     }
 
-    const importId = importRecord.id;
+    importId = importRecord.id;
     console.log(`[process-import] Created import record: ${importId}`);
     await supabase.from('imports').update({ status: 'PARSED' }).eq('id', importId);
 
@@ -716,6 +717,18 @@ serve(async (req) => {
   } catch (error: unknown) {
     console.error('[process-import] Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+    // Mark the import as FAILED so the user sees an error (not stuck "Processing")
+    if (importId) {
+      try {
+        await supabase.from('imports').update({
+          status: 'FAILED',
+          error_message: errorMessage,
+        }).eq('id', importId);
+      } catch {
+        // Best effort — if this also fails, the CRON will catch it
+      }
+    }
 
     return new Response(
       JSON.stringify({ error: errorMessage }),
