@@ -347,21 +347,6 @@ IMPORTANT:
 - If no data for an array, return it as []
 `;
 
-// Legacy prompt for backward compatibility (bank statement deposit/withdrawal detection)
-const LEGACY_ANALYSIS_PROMPT = `You are a financial data extraction expert specialized in detecting investment and savings movements from bank statements. Your task is to extract ONLY transactions that represent money going INTO or OUT of investment/savings accounts.
-
-CRITICAL: Respond ONLY with a valid JSON array. No markdown, no explanation, just the JSON.
-
-For each INVESTMENT transaction, extract:
-- date: ISO format (YYYY-MM-DD)
-- description: Clean, readable description
-- amount: Absolute numeric value (always positive)
-- type: "deposit" (money going to investment) or "withdrawal" (money coming back from investment)
-- platform: The investment platform name
-- asset_type: Type of asset if identifiable (e.g., "Savings", "ETF", "Stocks", "Bonds", "Crypto", "Mixed", null if unknown)
-
-If no investment transactions are found, return: []`;
-
 // ─── Platform normalization ──────────────────────────────────────────────────
 
 function normalizePlatform(platform: string): string {
