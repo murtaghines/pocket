@@ -23,7 +23,7 @@ import type { Account } from "@/hooks/useAccounts";
 import { getAccountDisplayName } from "@/lib/accountColors";
 import { ProcessingPanel } from "./ProcessingPanel";
 import { InvestmentTxEditDrawer } from "./InvestmentTxEditDrawer";
-import type { InvestmentSummary, InvestmentAccountTab } from "./InvestmentDataToolbar";
+import type { InvestmentAccountTab } from "./InvestmentDataToolbar";
 import { TX_TYPE_CONFIG, getTxTypeMeta } from "./types";
 import type { InvestmentTransaction, PendingFileInfo, PendingInvTxEdit, InvestmentTxSummary } from "./types";
 import { toast as sonnerToast } from "sonner";
@@ -43,7 +43,7 @@ export interface InlineInvestmentTxEditorProps {
   isProcessing: boolean;
   pendingFiles?: PendingFileInfo[];
   filterImportIds?: Set<string>;
-  onSummaryChange?: (data: { tabs: InvestmentAccountTab[]; globalSummary: InvestmentSummary }) => void;
+  onSummaryChange?: (data: { tabs: InvestmentAccountTab[]; globalSummary: InvestmentTxSummary }) => void;
 }
 
 export function InlineInvestmentTxEditor({
@@ -122,19 +122,11 @@ export function InlineInvestmentTxEditor({
     return Array.from(map.values());
   }, [transactions, imports, investmentAccounts]);
 
-  const compatSummary = useMemo<InvestmentSummary>(() => ({
-    count: summary.count,
-    deposits: summary.buys,
-    withdrawals: summary.sells,
-    net: summary.net,
-    hidden: 0,
-  }), [summary]);
-
   const callbackRef = useRef(onSummaryChange);
   callbackRef.current = onSummaryChange;
   useEffect(() => {
-    callbackRef.current?.({ tabs: accountTabsData, globalSummary: compatSummary });
-  }, [accountTabsData, compatSummary]);
+    callbackRef.current?.({ tabs: accountTabsData, globalSummary: summary });
+  }, [accountTabsData, summary]);
 
   const handleFieldSave = (tx: InvestmentTransaction, field: string, raw: string) => {
     const sanitized = raw.replace(/\s/g, "").replace(",", ".");

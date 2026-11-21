@@ -8,7 +8,8 @@ import { getAccountDisplayName, getAccountColor } from "@/lib/accountColors";
 import { InlineInvestmentTxEditor } from "./InlineInvestmentTxEditor";
 import { ProcessingPanel } from "./ProcessingPanel";
 import type { PendingFileInfo } from "./types";
-import type { InvestmentSummary, InvestmentAccountTab } from "./InvestmentDataToolbar";
+import type { InvestmentAccountTab } from "./InvestmentDataToolbar";
+import type { InvestmentTxSummary } from "./types";
 
 export interface MonthWorkspaceProps {
   monthKey: string;
@@ -23,7 +24,7 @@ export interface MonthWorkspaceProps {
   pendingFiles?: PendingFileInfo[];
   activeAccountId: string | null;
   onAccountChange: (id: string | null) => void;
-  onTabsDataChange?: (data: { tabs: InvestmentAccountTab[]; globalSummary: InvestmentSummary }) => void;
+  onTabsDataChange?: (data: { tabs: InvestmentAccountTab[]; globalSummary: InvestmentTxSummary }) => void;
 }
 
 export function MonthWorkspace({
