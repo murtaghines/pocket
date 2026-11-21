@@ -20,7 +20,6 @@ const REPO = resolve(__dirname, '..');
 
 const DEDUP_TABLES: { table: string; hashColumn: string }[] = [
   { table: 'transactions', hashColumn: 'fingerprint' },
-  { table: 'investments', hashColumn: 'transaction_hash' },
 ];
 
 function walk(dir: string, exts: string[]): string[] {

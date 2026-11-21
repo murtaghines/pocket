@@ -26,7 +26,7 @@ Commands:
   for Pocket's branding. Never hand-assemble the logo elsewhere (see design-system rule).
 - `src/components/ui/` — shadcn primitives; don't modify base logic, only styles via tokens
 - `src/hooks/` — ALL data logic lives here (one hook per entity: `useTransactions`,
-  `useAccounts`, `useCategories`, `useImports`, `useInvestments`…). Components never fetch directly.
+  `useAccounts`, `useCategories`, `useImports`, `useInvestmentTransactions`, `useHoldings`…). Components never fetch directly.
 - `src/integrations/supabase/` — client and generated `types.ts`
 - `src/lib/` — pure utilities (`excelParser`, `currencies`, `categoryTranslations`…)
 - `src/i18n/locales/{en,es}/` — namespaces: account, auth, categories, common, dashboard, investments, profile, settings

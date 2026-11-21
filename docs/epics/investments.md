@@ -384,8 +384,16 @@ This phase is particularly relevant for Argentine users who invest across curren
 - Stripped `useInvestments` hook to `investment_accounts` CRUD only
 - Zero `from("investments")` references remain — table can be dropped after verification
 
+### Legacy Table Drop — DONE (2026-11-21)
+- Migration: dropped `investments` and `investment_accounts` tables (CASCADE)
+- Rewrote `take_portfolio_snapshot` to read from `investment_transactions` instead of `investments`
+- Rewrote `log_audit_event` to remove `'investment'` entity type
+- Dropped `get_investment_summary` RPC (unused, replaced by `get_portfolio_summary`)
+- Deleted `useInvestments` hook and `InvestmentAccountsManager` component
+- Removed "accounts" subtab from `/investments` — investment accounts are managed
+  at `/account?tab=accounts` via the full `AccountsWorkspace`
+- Cleaned up demo-seed, integrity test, and dead i18n keys
+
 ## Next step
-- All planned phases complete. The `investments` table has zero runtime consumers and can
-  be dropped from the DB after a verification period. `investment_accounts` deprecation
-  (migrate manual value tracking to `accounts` table) is a separate future concern.
-  Remaining Phase 5 ideas (not planned): price alerts (requires external API, costs money)
+- All planned phases complete, all legacy tables dropped. Nothing remains.
+  Future ideas (not planned): price alerts (requires external API, costs money)
