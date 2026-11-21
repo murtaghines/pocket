@@ -928,7 +928,7 @@ async function handleSmartConfirm(
   // Update import status
   await supabase.from('imports').update({
     status: 'NORMALIZED',
-    transactions_count: txInserted + positionsUpserted + cashTransactions.length,
+    transactions_count: txInserted,
   }).eq('id', importId);
 
   const message = `Smart import: ${txInserted} transactions, ${positionsUpserted} positions, ${ratesSaved} exchange rates`;

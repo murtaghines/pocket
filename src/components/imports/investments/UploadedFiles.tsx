@@ -116,15 +116,15 @@ export function UploadedFilesHistoryList({
       const ids = imports.map((i) => i.id);
       if (ids.length === 0) return {} as Record<string, string[]>;
       const { data, error } = await supabase
-        .from("investments")
-        .select("upload_id, date")
-        .in("upload_id", ids);
+        .from("investment_transactions")
+        .select("import_id, date")
+        .in("import_id", ids);
       if (error) throw error;
       const map: Record<string, Set<string>> = {};
-      (data || []).forEach((row: { upload_id: string | null; date: string | null }) => {
-        if (!row.upload_id || !row.date) return;
+      (data || []).forEach((row: { import_id: string | null; date: string | null }) => {
+        if (!row.import_id || !row.date) return;
         const key = String(row.date).substring(0, 7);
-        (map[row.upload_id] ??= new Set()).add(key);
+        (map[row.import_id] ??= new Set()).add(key);
       });
       const out: Record<string, string[]> = {};
       Object.entries(map).forEach(([k, set]) => {

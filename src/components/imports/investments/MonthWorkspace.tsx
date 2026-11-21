@@ -5,9 +5,9 @@ import { cn } from "@/lib/utils";
 import type { Import } from "@/hooks/useImports";
 import type { Account } from "@/hooks/useAccounts";
 import { getAccountDisplayName, getAccountColor } from "@/lib/accountColors";
-import { InlineInvestmentsEditor } from "./InlineInvestmentsEditor";
+import { InlineInvestmentTxEditor } from "./InlineInvestmentTxEditor";
 import { ProcessingPanel } from "./ProcessingPanel";
-import type { PendingFileInfo, PendingInvEdit } from "./types";
+import type { PendingFileInfo } from "./types";
 import type { InvestmentSummary, InvestmentAccountTab } from "./InvestmentDataToolbar";
 
 export interface MonthWorkspaceProps {
@@ -21,8 +21,6 @@ export interface MonthWorkspaceProps {
   isDeleting: boolean;
   isProcessing: boolean;
   pendingFiles?: PendingFileInfo[];
-  pendingByInv: Record<string, PendingInvEdit>;
-  setPendingByInv: React.Dispatch<React.SetStateAction<Record<string, PendingInvEdit>>>;
   activeAccountId: string | null;
   onAccountChange: (id: string | null) => void;
   onTabsDataChange?: (data: { tabs: InvestmentAccountTab[]; globalSummary: InvestmentSummary }) => void;
@@ -39,8 +37,6 @@ export function MonthWorkspace({
   isDeleting,
   isProcessing,
   pendingFiles,
-  pendingByInv,
-  setPendingByInv,
   activeAccountId,
   onAccountChange,
   onTabsDataChange,
@@ -76,7 +72,7 @@ export function MonthWorkspace({
     [imports, selectedAccountId],
   );
 
-  const filterUploadIds = useMemo(
+  const filterImportIds = useMemo(
     () => (selectedAccountId ? new Set(filteredImports.map((i) => i.id)) : undefined),
     [selectedAccountId, filteredImports],
   );
@@ -187,7 +183,7 @@ export function MonthWorkspace({
           ))}
         </div>
       )}
-      <InlineInvestmentsEditor
+      <InlineInvestmentTxEditor
         monthKey={monthKey}
         monthLabel={monthLabel}
         imports={imports}
@@ -196,10 +192,8 @@ export function MonthWorkspace({
         isDeleting={isDeleting}
         isProcessing={isProcessing}
         pendingFiles={activePending}
-        pendingByInv={pendingByInv}
-        setPendingByInv={setPendingByInv}
-        filterUploadIds={filterUploadIds}
-        onTabsDataChange={onTabsDataChange}
+        filterImportIds={filterImportIds}
+        onSummaryChange={onTabsDataChange}
       />
     </div>
   );

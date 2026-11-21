@@ -15,8 +15,6 @@ import { InvestmentPreviewDialog } from "./investments/InvestmentPreviewDialog";
 import { InvestmentDataToolbar } from "./investments/InvestmentDataToolbar";
 import type { InvestmentSummary, InvestmentAccountTab } from "./investments/InvestmentDataToolbar";
 import { MobileUploadFAB } from "./MobileUploadFAB";
-import type { PendingInvEdit } from "./investments/types";
-
 const DEFAULT_MONTHS = 6;
 const MIN_MONTHS = 6;
 const MONTHS_INCREMENT = 1;
@@ -62,8 +60,6 @@ export function InvestmentTabsView({ activeMonth, onMonthChange }: InvestmentTab
     return Math.max(DEFAULT_MONTHS, diff);
   });
 
-  // Pending edits live in the parent so they survive month-tab switches.
-  const [pendingByInv, setPendingByInv] = useState<Record<string, PendingInvEdit>>({});
   // Account tab state — lifted so InvestmentDataToolbar can render tabs
   const [activeAccountId, setActiveAccountId] = useState<string | null>(null);
   const [accountTabsData, setAccountTabsData] = useState<InvestmentAccountTab[]>([]);
@@ -254,9 +250,10 @@ export function InvestmentTabsView({ activeMonth, onMonthChange }: InvestmentTab
             name: f.name,
             size: f.size,
             status: f.status,
+            error: f.error,
+            progressLabel: f.progressLabel,
+            progressPercent: f.progressPercent,
           }))}
-          pendingByInv={pendingByInv}
-          setPendingByInv={setPendingByInv}
           activeAccountId={activeAccountId}
           onAccountChange={setActiveAccountId}
           onTabsDataChange={handleTabsDataChange}
