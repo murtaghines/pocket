@@ -13,10 +13,9 @@ import { MonthTabStrip } from "./investments/MonthTabStrip";
 import { MonthWorkspace } from "./investments/MonthWorkspace";
 import { InvestmentPreviewDialog } from "./investments/InvestmentPreviewDialog";
 import { InvestmentDataToolbar } from "./investments/InvestmentDataToolbar";
-import type { InvestmentSummary, InvestmentAccountTab } from "./investments/InvestmentDataToolbar";
+import type { InvestmentAccountTab } from "./investments/InvestmentDataToolbar";
+import type { InvestmentTxSummary } from "./investments/types";
 import { MobileUploadFAB } from "./MobileUploadFAB";
-import type { PendingInvEdit } from "./investments/types";
-
 const DEFAULT_MONTHS = 6;
 const MIN_MONTHS = 6;
 const MONTHS_INCREMENT = 1;
@@ -41,6 +40,8 @@ export function InvestmentTabsView({ activeMonth, onMonthChange }: InvestmentTab
     processFilesForMonth,
     isProcessingMonth,
     getPendingCountForMonth,
+    cancelFile,
+    isProcessingAny: hookIsProcessingAny,
     showPreview,
     previewData,
     previewStats,
@@ -52,6 +53,8 @@ export function InvestmentTabsView({ activeMonth, onMonthChange }: InvestmentTab
     updateTransaction,
     removeTransaction,
     removePosition,
+    retryImport,
+    retryingImportIds,
   } = useMonthlyInvestmentUpload();
 
   const [monthsToShow, setMonthsToShow] = useState(() => {
@@ -62,13 +65,11 @@ export function InvestmentTabsView({ activeMonth, onMonthChange }: InvestmentTab
     return Math.max(DEFAULT_MONTHS, diff);
   });
 
-  // Pending edits live in the parent so they survive month-tab switches.
-  const [pendingByInv, setPendingByInv] = useState<Record<string, PendingInvEdit>>({});
   // Account tab state — lifted so InvestmentDataToolbar can render tabs
   const [activeAccountId, setActiveAccountId] = useState<string | null>(null);
   const [accountTabsData, setAccountTabsData] = useState<InvestmentAccountTab[]>([]);
-  const [globalSummary, setGlobalSummary] = useState<InvestmentSummary | undefined>(undefined);
-  const handleTabsDataChange = useCallback((data: { tabs: InvestmentAccountTab[]; globalSummary: InvestmentSummary }) => {
+  const [globalSummary, setGlobalSummary] = useState<InvestmentTxSummary | undefined>(undefined);
+  const handleTabsDataChange = useCallback((data: { tabs: InvestmentAccountTab[]; globalSummary: InvestmentTxSummary }) => {
     setAccountTabsData(data.tabs);
     setGlobalSummary(data.globalSummary);
   }, []);
@@ -220,6 +221,11 @@ export function InvestmentTabsView({ activeMonth, onMonthChange }: InvestmentTab
         activeAccountId={activeAccountId}
         onAccountSelect={setActiveAccountId}
         globalSummary={globalSummary}
+        imports={importsByMonth[activeKey] || []}
+        deleteImport={deleteImport}
+        isDeleting={isDeleting}
+        retryImport={retryImport}
+        retryingImportIds={retryingImportIds}
       />
 
       {/* ============= Month Tab Strip (mobile only) ============= */}
@@ -254,12 +260,14 @@ export function InvestmentTabsView({ activeMonth, onMonthChange }: InvestmentTab
             name: f.name,
             size: f.size,
             status: f.status,
+            error: f.error,
+            progressLabel: f.progressLabel,
+            progressPercent: f.progressPercent,
           }))}
-          pendingByInv={pendingByInv}
-          setPendingByInv={setPendingByInv}
           activeAccountId={activeAccountId}
           onAccountChange={setActiveAccountId}
           onTabsDataChange={handleTabsDataChange}
+          onCancelFile={(fileId) => cancelFile(activeSlot.key, fileId)}
         />
       )}
 

@@ -1,4 +1,5 @@
-import { useInvestments } from "@/hooks/useInvestments";
+import { useMemo } from "react";
+import { useInvestmentTransactions } from "@/hooks/useInvestmentTransactions";
 import { useHoldings } from "@/hooks/useHoldings";
 import { useLocalization } from "@/hooks/useLocalization";
 import { TrendingUp, ArrowRight } from "lucide-react";
@@ -6,20 +7,26 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 export function InvestmentSummaryCard() {
-  const { totalInvestedThisMonth, totalCurrentValue, hasData } = useInvestments();
+  const currentMonth = useMemo(() => new Date().toISOString().slice(0, 7), []);
+  const { transactions: monthTxs, isLoading: isLoadingTx } = useInvestmentTransactions({ monthKey: currentMonth });
   const { summary, hasHoldings, pnlPercent } = useHoldings();
   const { t } = useTranslation('dashboard');
   const { formatCurrency } = useLocalization();
 
+  const totalInvestedThisMonth = useMemo(
+    () => monthTxs.filter(tx => tx.type === 'buy').reduce((s, tx) => s + tx.total_amount, 0),
+    [monthTxs],
+  );
+
   const usePortfolioData = hasHoldings && summary.totalValue > 0;
 
-  const displayValue = usePortfolioData ? summary.totalValue : totalCurrentValue;
-  const gain = usePortfolioData ? summary.totalPnl : totalCurrentValue - totalInvestedThisMonth;
+  const displayValue = usePortfolioData ? summary.totalValue : totalInvestedThisMonth;
+  const gain = usePortfolioData ? summary.totalPnl : 0;
   const gainPct = usePortfolioData
     ? (summary.totalCostBasis > 0 ? pnlPercent.toFixed(1) : null)
-    : (totalInvestedThisMonth > 0 ? ((gain / totalInvestedThisMonth) * 100).toFixed(1) : null);
+    : null;
   const isPositive = gain >= 0;
-  const hasAnyData = hasData || hasHoldings;
+  const hasAnyData = monthTxs.length > 0 || hasHoldings;
 
   return (
     <div
@@ -42,7 +49,9 @@ export function InvestmentSummaryCard() {
             {formatCurrency(displayValue)}
           </p>
           <p className="text-[12px] text-muted-foreground mt-1">
-            {t('investments.totalValue', 'Current portfolio value')}
+            {usePortfolioData
+              ? t('investments.totalValue', 'Current portfolio value')
+              : t('investments.investedThisMonth', 'Invested this month')}
           </p>
 
           {/* Stats row */}

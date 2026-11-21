@@ -370,5 +370,30 @@ This phase is particularly relevant for Argentine users who invest across curren
 - "exchange" → "buy" mapping for commodity purchases
 - Multi-currency handling (USD + EUR in same file, XAU for commodities)
 
+### Investments Table Deprecation — DONE (2026-11-21)
+- Fixed `retry-failed-imports` cron to route INVESTING domain to `process-investment-file`
+- Rewrote Activity tab: removed legacy charts (InvestmentsByPlatform, InvestmentsHistory,
+  InvestmentsTable), replaced with InvestmentsByAccount, InvestmentsByAsset,
+  InvestmentActivityHistory — all powered by `useInvestmentTransactions` + client-side
+  aggregation in `src/lib/investmentAggregates.ts`
+- Migrated `useAccountDetail` and `useImportFile` from `investments` to `investment_transactions`
+- Rewrote `InvestmentSummaryCard` to use `useInvestmentTransactions` + `useHoldings`
+- Rewrote `get_investment_summary` RPC via migration to read from `investment_transactions`
+- Removed dual-write to `investments` table in `process-investment-file`
+- Removed `handleLegacyConfirm` dead code path
+- Stripped `useInvestments` hook to `investment_accounts` CRUD only
+- Zero `from("investments")` references remain — table can be dropped after verification
+
+### Legacy Table Drop — DONE (2026-11-21)
+- Migration: dropped `investments` and `investment_accounts` tables (CASCADE)
+- Rewrote `take_portfolio_snapshot` to read from `investment_transactions` instead of `investments`
+- Rewrote `log_audit_event` to remove `'investment'` entity type
+- Dropped `get_investment_summary` RPC (unused, replaced by `get_portfolio_summary`)
+- Deleted `useInvestments` hook and `InvestmentAccountsManager` component
+- Removed "accounts" subtab from `/investments` — investment accounts are managed
+  at `/account?tab=accounts` via the full `AccountsWorkspace`
+- Cleaned up demo-seed, integrity test, and dead i18n keys
+
 ## Next step
-- All planned phases complete. Remaining Phase 5 ideas (not planned): price alerts (requires external API, costs money)
+- All planned phases complete, all legacy tables dropped. Nothing remains.
+  Future ideas (not planned): price alerts (requires external API, costs money)

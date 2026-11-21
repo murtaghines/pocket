@@ -23,7 +23,7 @@ export function useAccountDetail(account: Account | null) {
         const ids = (imports ?? []).map((i) => i.id);
         if (ids.length === 0) return { firstDate: null, lastDate: null };
         const edge = (ascending: boolean) =>
-          supabase.from("investments").select("date").in("upload_id", ids).eq("is_hidden", false)
+          supabase.from("investment_transactions").select("date").in("import_id", ids)
             .order("date", { ascending }).limit(1);
         const [first, last] = await Promise.all([edge(true), edge(false)]);
         return { firstDate: first.data?.[0]?.date ?? null, lastDate: last.data?.[0]?.date ?? null };

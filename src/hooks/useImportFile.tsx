@@ -136,10 +136,13 @@ async function loadCashPreview(imp: Import, userId: string): Promise<ImportPrevi
 
 async function loadInvestmentPreview(imp: Import): Promise<ImportPreview> {
   const [res, firstRes, lastRes] = await Promise.all([
-    supabase.from("investments").select("id, date, description, original_text, amount, type", { count: "exact" })
-      .eq("upload_id", imp.id).order("date", { ascending: false }).limit(PREVIEW_LIMIT),
-    supabase.from("investments").select("date").eq("upload_id", imp.id).order("date", { ascending: true }).limit(1),
-    supabase.from("investments").select("date").eq("upload_id", imp.id).order("date", { ascending: false }).limit(1),
+    supabase.from("investment_transactions")
+      .select("id, date, ticker, asset_name, type, total_amount", { count: "exact" })
+      .eq("import_id", imp.id).order("date", { ascending: false }).limit(PREVIEW_LIMIT),
+    supabase.from("investment_transactions").select("date")
+      .eq("import_id", imp.id).order("date", { ascending: true }).limit(1),
+    supabase.from("investment_transactions").select("date")
+      .eq("import_id", imp.id).order("date", { ascending: false }).limit(1),
   ]);
   return {
     source: "extracted",
@@ -147,8 +150,10 @@ async function loadInvestmentPreview(imp: Import): Promise<ImportPreview> {
     rows: (res.data ?? []).map((r) => ({
       key: r.id,
       date: r.date,
-      description: r.original_text || r.description,
-      amount: Number(r.amount),
+      description: r.ticker
+        ? `${r.type.toUpperCase()} ${r.ticker}`
+        : (r.asset_name || r.type),
+      amount: Number(r.total_amount),
       extra: r.type,
     })),
     firstDate: firstRes.data?.[0]?.date ?? null,

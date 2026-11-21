@@ -3,7 +3,9 @@
  *
  * Runs on a schedule (e.g. every 15 minutes) to find FAILED or PARTIAL imports
  * that are less than 24 hours old and have been retried fewer than 3 times,
- * then re-invokes process-import for each one.
+ * then re-invokes the appropriate edge function for each one:
+ *   - INVESTING domain → process-investment-file (with previewOnly: false)
+ *   - all other domains → process-import
  *
  * Designed to be called by pg_cron or Supabase's scheduled functions.
  * Authorization: uses the service role key (no user auth needed).
@@ -148,9 +150,13 @@ serve(async (req) => {
         continue;
       }
 
-      // Re-invoke process-import via internal function call
+      // Re-invoke the right edge function based on domain
+      const functionName = imp.domain === 'INVESTING'
+        ? 'process-investment-file'
+        : 'process-import';
+
       try {
-        const processResponse = await fetch(`${SUPABASE_URL}/functions/v1/process-import`, {
+        const processResponse = await fetch(`${SUPABASE_URL}/functions/v1/${functionName}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -164,6 +170,7 @@ serve(async (req) => {
             domain: imp.domain,
             sourceType: imp.source_type || 'OTHER',
             userId: imp.user_id,
+            ...(imp.domain === 'INVESTING' ? { previewOnly: false } : {}),
           }),
         });
 
@@ -194,7 +201,7 @@ serve(async (req) => {
           });
         }
       } catch (invokeError) {
-        console.error(`[retry-failed-imports] Failed to invoke process-import for ${imp.id}:`, invokeError);
+        console.error(`[retry-failed-imports] Failed to invoke ${functionName} for ${imp.id}:`, invokeError);
         results.push({
           importId: imp.id,
           status: 'invoke_failed',
