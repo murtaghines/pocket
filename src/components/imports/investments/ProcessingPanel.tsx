@@ -1,9 +1,14 @@
-import { Loader2, FileText, CheckCircle2 } from "lucide-react";
+import { Loader2, FileText, CheckCircle2, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import type { PendingFileInfo } from "./types";
 
-export function ProcessingPanel({ files }: { files: PendingFileInfo[] }) {
+interface ProcessingPanelProps {
+  files: PendingFileInfo[];
+  onCancel?: (fileId: string) => void;
+}
+
+export function ProcessingPanel({ files, onCancel }: ProcessingPanelProps) {
   const { t } = useTranslation("common");
   return (
     <div className="rounded-xl border border-border/70 bg-card shadow-[0_2px_18px_-8px_rgb(8_8_8_/_0.08)] overflow-hidden">
@@ -37,12 +42,24 @@ export function ProcessingPanel({ files }: { files: PendingFileInfo[] }) {
                   )}
                   <span className="text-sm font-medium text-foreground truncate">{f.name}</span>
                 </div>
-                <span className={cn(
-                  "text-[11px] tabular-nums shrink-0",
-                  isError ? "text-destructive" : isDone ? "text-success" : "text-muted-foreground",
-                )}>
-                  {f.progressLabel || (f.status === "processing" ? t("imports.processingStatus") : t("imports.pendingStatus"))}
-                </span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={cn(
+                    "text-[11px] tabular-nums",
+                    isError ? "text-destructive" : isDone ? "text-success" : "text-muted-foreground",
+                  )}>
+                    {f.progressLabel || (f.status === "processing" ? t("imports.processingStatus") : t("imports.pendingStatus"))}
+                  </span>
+                  {onCancel && !isDone && !isError && (
+                    <button
+                      type="button"
+                      onClick={() => onCancel(f.id)}
+                      className="flex h-5 w-5 items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                      title={t("imports.cancelUpload")}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
 
               {f.status === "processing" && (

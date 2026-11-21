@@ -25,6 +25,7 @@ export interface MonthWorkspaceProps {
   activeAccountId: string | null;
   onAccountChange: (id: string | null) => void;
   onTabsDataChange?: (data: { tabs: InvestmentAccountTab[]; globalSummary: InvestmentTxSummary }) => void;
+  onCancelFile?: (fileId: string) => void;
 }
 
 export function MonthWorkspace({
@@ -41,6 +42,7 @@ export function MonthWorkspace({
   activeAccountId,
   onAccountChange,
   onTabsDataChange,
+  onCancelFile,
 }: MonthWorkspaceProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const selectedAccountId = activeAccountId;
@@ -88,7 +90,7 @@ export function MonthWorkspace({
       <div className="bg-card py-12 md:py-20 px-6 text-center flex-1 flex flex-col items-center justify-center">
         {activePending.length > 0 ? (
           <div className="w-full max-w-xl">
-            <ProcessingPanel files={activePending} />
+            <ProcessingPanel files={activePending} onCancel={onCancelFile} />
           </div>
         ) : (
           <>
@@ -195,6 +197,7 @@ export function MonthWorkspace({
         pendingFiles={activePending}
         filterImportIds={filterImportIds}
         onSummaryChange={onTabsDataChange}
+        onCancelFile={onCancelFile}
       />
     </div>
   );

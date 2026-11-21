@@ -44,6 +44,7 @@ export interface InlineInvestmentTxEditorProps {
   pendingFiles?: PendingFileInfo[];
   filterImportIds?: Set<string>;
   onSummaryChange?: (data: { tabs: InvestmentAccountTab[]; globalSummary: InvestmentTxSummary }) => void;
+  onCancelFile?: (fileId: string) => void;
 }
 
 export function InlineInvestmentTxEditor({
@@ -57,6 +58,7 @@ export function InlineInvestmentTxEditor({
   pendingFiles,
   filterImportIds,
   onSummaryChange,
+  onCancelFile,
 }: InlineInvestmentTxEditorProps) {
   const { toast } = useToast();
   const { formatCurrency, formatDate, formatWeekday } = useLocalization();
@@ -192,7 +194,7 @@ export function InlineInvestmentTxEditor({
     <div className="flex-1 flex flex-col">
       {pendingFiles && pendingFiles.length > 0 && (
         <div className="px-6 py-3 border-b border-border">
-          <ProcessingPanel files={pendingFiles} />
+          <ProcessingPanel files={pendingFiles} onCancel={onCancelFile} />
         </div>
       )}
 
@@ -557,7 +559,7 @@ export function InlineInvestmentTxEditor({
             {pendingFiles && pendingFiles.length > 0 && (
               <div className="bg-card px-6 py-6 flex items-start justify-center border-t border-border">
                 <div className="w-full max-w-xl">
-                  <ProcessingPanel files={pendingFiles} />
+                  <ProcessingPanel files={pendingFiles} onCancel={onCancelFile} />
                 </div>
               </div>
             )}

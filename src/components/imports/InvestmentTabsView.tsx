@@ -267,6 +267,7 @@ export function InvestmentTabsView({ activeMonth, onMonthChange }: InvestmentTab
           activeAccountId={activeAccountId}
           onAccountChange={setActiveAccountId}
           onTabsDataChange={handleTabsDataChange}
+          onCancelFile={(fileId) => cancelFile(activeSlot.key, fileId)}
         />
       )}
 
