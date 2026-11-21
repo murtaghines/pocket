@@ -370,5 +370,22 @@ This phase is particularly relevant for Argentine users who invest across curren
 - "exchange" → "buy" mapping for commodity purchases
 - Multi-currency handling (USD + EUR in same file, XAU for commodities)
 
+### Investments Table Deprecation — DONE (2026-11-21)
+- Fixed `retry-failed-imports` cron to route INVESTING domain to `process-investment-file`
+- Rewrote Activity tab: removed legacy charts (InvestmentsByPlatform, InvestmentsHistory,
+  InvestmentsTable), replaced with InvestmentsByAccount, InvestmentsByAsset,
+  InvestmentActivityHistory — all powered by `useInvestmentTransactions` + client-side
+  aggregation in `src/lib/investmentAggregates.ts`
+- Migrated `useAccountDetail` and `useImportFile` from `investments` to `investment_transactions`
+- Rewrote `InvestmentSummaryCard` to use `useInvestmentTransactions` + `useHoldings`
+- Rewrote `get_investment_summary` RPC via migration to read from `investment_transactions`
+- Removed dual-write to `investments` table in `process-investment-file`
+- Removed `handleLegacyConfirm` dead code path
+- Stripped `useInvestments` hook to `investment_accounts` CRUD only
+- Zero `from("investments")` references remain — table can be dropped after verification
+
 ## Next step
-- All planned phases complete. Remaining Phase 5 ideas (not planned): price alerts (requires external API, costs money)
+- All planned phases complete. The `investments` table has zero runtime consumers and can
+  be dropped from the DB after a verification period. `investment_accounts` deprecation
+  (migrate manual value tracking to `accounts` table) is a separate future concern.
+  Remaining Phase 5 ideas (not planned): price alerts (requires external API, costs money)
