@@ -56,6 +56,23 @@
     "withdrawals": "Retiros",
     "net": "Neto"
   },
+  "byAccount": {
+    "title": "Por Cuenta",
+    "noData": "Sin datos por cuenta",
+    "net": "Neto invertido"
+  },
+  "byAsset": {
+    "title": "Por Activo",
+    "noData": "Sin datos por activo",
+    "net": "Neto invertido"
+  },
+  "activityHistory": {
+    "title": "Historial de Actividad",
+    "totalAccumulated": "Total Acumulado",
+    "buys": "Compras",
+    "sells": "Ventas",
+    "dividends": "Dividendos"
+  },
   "byPlatform": {
     "title": "Por Plataforma",
     "noData": "Sin datos por plataforma",

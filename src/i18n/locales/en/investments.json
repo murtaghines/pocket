@@ -47,6 +47,23 @@
     "withdrawals": "Withdrawals",
     "net": "Net"
   },
+  "byAccount": {
+    "title": "By Account",
+    "noData": "No data by account",
+    "net": "Net invested"
+  },
+  "byAsset": {
+    "title": "By Asset",
+    "noData": "No data by asset",
+    "net": "Net invested"
+  },
+  "activityHistory": {
+    "title": "Activity History",
+    "totalAccumulated": "Total Accumulated",
+    "buys": "Buys",
+    "sells": "Sells",
+    "dividends": "Dividends"
+  },
   "byPlatform": {
     "title": "By Platform",
     "noData": "No data by platform",

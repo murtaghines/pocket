@@ -1,16 +1,7 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { useTranslation } from "react-i18next";
 import { useLocalization } from "@/hooks/useLocalization";
-
-interface PlatformData {
-  deposits: number;
-  withdrawals: number;
-  net: number;
-}
-
-interface InvestmentsByPlatformProps {
-  data: Record<string, PlatformData>;
-}
+import type { AccountBreakdown } from "@/lib/investmentAggregates";
 
 const COLORS = [
   'hsl(var(--primary))',
@@ -23,7 +14,7 @@ const COLORS = [
   'hsl(var(--category-rents))',
 ];
 
-function PlatformTooltip({ active, payload }: any) {
+function AccountTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
@@ -31,39 +22,38 @@ function PlatformTooltip({ active, payload }: any) {
       <p className="text-xs font-medium text-foreground mb-1">{d.name}</p>
       <div className="flex justify-between gap-4">
         <span className="text-xs text-muted-foreground">{d._labelNet}</span>
-        <span className="text-sm font-semibold tabular-nums">
-          {d._fmtValue}
-        </span>
+        <span className="text-sm font-semibold tabular-nums">{d._fmtValue}</span>
       </div>
     </div>
   );
 }
 
-export function InvestmentsByPlatform({ data }: InvestmentsByPlatformProps) {
-  const { t } = useTranslation('investments');
+interface InvestmentsByAccountProps {
+  data: AccountBreakdown[];
+}
+
+export function InvestmentsByAccount({ data }: InvestmentsByAccountProps) {
+  const { t } = useTranslation("investments");
   const { formatCurrency } = useLocalization();
 
-  const chartData = Object.entries(data)
-    .map(([name, values], index) => ({
-      name,
-      value: values.net,
-      deposits: values.deposits,
-      withdrawals: values.withdrawals,
-      color: COLORS[index % COLORS.length],
-      _labelNet: t('byPlatform.net'),
-      _fmtValue: formatCurrency(values.net),
-    }))
-    .filter(d => d.value > 0)
-    .sort((a, b) => b.value - a.value);
+  const chartData = data
+    .filter((d) => d.net > 0)
+    .map((d, i) => ({
+      name: d.accountName,
+      value: d.net,
+      color: COLORS[i % COLORS.length],
+      _labelNet: t("byAccount.net", "Net invested"),
+      _fmtValue: formatCurrency(d.net),
+    }));
 
   if (chartData.length === 0) {
     return (
       <div className="rounded-xl bg-card shadow-section overflow-hidden h-full flex flex-col">
         <div className="px-6 pt-5 pb-3 shrink-0">
-          <h3 className="text-base font-semibold">{t('byPlatform.title')}</h3>
+          <h3 className="text-base font-semibold">{t("byAccount.title", "By Account")}</h3>
         </div>
         <div className="flex-1 min-h-0 flex items-center justify-center px-6 pb-5">
-          <p className="text-sm text-muted-foreground">{t('byPlatform.noData')}</p>
+          <p className="text-sm text-muted-foreground">{t("byAccount.noData", "No data by account")}</p>
         </div>
       </div>
     );
@@ -74,7 +64,7 @@ export function InvestmentsByPlatform({ data }: InvestmentsByPlatformProps) {
   return (
     <div className="rounded-xl bg-card shadow-section overflow-hidden h-full flex flex-col">
       <div className="px-6 pt-5 pb-3 shrink-0">
-        <h3 className="text-base font-semibold">{t('byPlatform.title')}</h3>
+        <h3 className="text-base font-semibold">{t("byAccount.title", "By Account")}</h3>
       </div>
       <div className="flex-1 min-h-0 flex flex-col md:flex-row items-center gap-4 px-6 pb-5">
         <div className="w-full md:w-1/2 h-[180px]">
@@ -94,7 +84,7 @@ export function InvestmentsByPlatform({ data }: InvestmentsByPlatformProps) {
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip content={<PlatformTooltip />} />
+              <Tooltip content={<AccountTooltip />} />
             </PieChart>
           </ResponsiveContainer>
         </div>

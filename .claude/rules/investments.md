@@ -6,6 +6,8 @@ paths:
 ---
 # Investments
 - Same chart pattern as Dashboard: semantic tokens, never a raw color
-- `InvestmentsTable`/`InvestmentsHistory` also feed `InvestmentSummaryCard` on the
-  Dashboard — if you change the data shape, check that usage
+- All transaction data lives in `investment_transactions` (not the legacy `investments` table)
+- Activity tab charts use client-side aggregation via `src/lib/investmentAggregates.ts`
+- `InvestmentSummaryCard` on the Dashboard uses `useInvestmentTransactions` + `useHoldings`
+- `useInvestments` hook is for `investment_accounts` only (manual portfolio value tracking)
 - This module's uploads go through `process-investment-file` (see rules/imports.md)

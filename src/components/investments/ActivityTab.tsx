@@ -1,32 +1,30 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { useInvestments } from "@/hooks/useInvestments";
 import { useInvestmentTransactions } from "@/hooks/useInvestmentTransactions";
-import { useLocalization } from "@/hooks/useLocalization";
+import { useAccounts } from "@/hooks/useAccounts";
 import { Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { InvestmentsByPlatform } from "./InvestmentsByPlatform";
-import { InvestmentsByAssetType } from "./InvestmentsByAssetType";
-import { InvestmentsHistory } from "./InvestmentsHistory";
-import { InvestmentsTable } from "./InvestmentsTable";
+import { InvestmentsByAccount } from "./InvestmentsByAccount";
+import { InvestmentsByAsset } from "./InvestmentsByAsset";
+import { InvestmentActivityHistory } from "./InvestmentActivityHistory";
 import { TransactionsList } from "./TransactionsList";
 import { RecordTransactionDialog } from "./RecordTransactionDialog";
+import { computeByAccount, computeByAsset, computeMonthlyHistory } from "@/lib/investmentAggregates";
 
 export function ActivityTab() {
   const { t } = useTranslation("investments");
   const { t: tc } = useTranslation("common");
-  const {
-    investments,
-    isLoading: isLoadingLegacy,
-    hasData,
-    byPlatform,
-    byAssetType,
-    monthlyHistory,
-  } = useInvestments();
-  const { transactions, isLoading: isLoadingTx } = useInvestmentTransactions();
+  const { transactions, isLoading } = useInvestmentTransactions();
+  const { getInvestmentAccounts } = useAccounts();
+  const investmentAccounts = getInvestmentAccounts();
   const [showRecord, setShowRecord] = useState(false);
 
-  const isLoading = isLoadingLegacy || isLoadingTx;
+  const byAccount = useMemo(
+    () => computeByAccount(transactions, investmentAccounts),
+    [transactions, investmentAccounts],
+  );
+  const byAsset = useMemo(() => computeByAsset(transactions), [transactions]);
+  const monthlyHistory = useMemo(() => computeMonthlyHistory(transactions), [transactions]);
 
   if (isLoading) {
     return (
@@ -36,9 +34,7 @@ export function ActivityTab() {
     );
   }
 
-  const hasAnyData = hasData || transactions.length > 0;
-
-  if (!hasAnyData) {
+  if (transactions.length === 0) {
     return (
       <div className="text-center py-12">
         <p className="text-muted-foreground mb-4">{tc("noData")}</p>
@@ -63,20 +59,18 @@ export function ActivityTab() {
         </Button>
       </div>
 
-      {transactions.length > 0 && <TransactionsList transactions={transactions} />}
+      <TransactionsList transactions={transactions} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-[14px] lg:h-[300px]">
-        <InvestmentsByPlatform data={byPlatform} />
-        <InvestmentsByAssetType data={byAssetType} />
+        <InvestmentsByAccount data={byAccount} />
+        <InvestmentsByAsset data={byAsset} />
       </div>
 
       {monthlyHistory.length > 0 && (
         <div className="lg:h-[300px]">
-          <InvestmentsHistory data={monthlyHistory} />
+          <InvestmentActivityHistory data={monthlyHistory} />
         </div>
       )}
-
-      {investments.length > 0 && <InvestmentsTable investments={investments} />}
 
       <RecordTransactionDialog open={showRecord} onOpenChange={setShowRecord} />
     </div>
