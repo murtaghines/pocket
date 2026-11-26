@@ -10,14 +10,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import type { InvestmentTxSummary } from "./types";
+import { UploadedFilesDropdown } from "./UploadedFiles";
+import type { Import } from "@/hooks/useImports";
 
-export interface InvestmentSummary {
-  count: number;
-  deposits: number;
-  withdrawals: number;
-  net: number;
-  hidden: number;
-}
+export type InvestmentSummary = InvestmentTxSummary;
 
 export interface InvestmentAccountTab {
   id: string;
@@ -42,6 +39,11 @@ interface InvestmentDataToolbarProps {
   activeAccountId: string | null;
   onAccountSelect: (id: string | null) => void;
   globalSummary?: InvestmentSummary;
+  imports?: Import[];
+  deleteImport?: (id: string) => void;
+  isDeleting?: boolean;
+  retryImport?: (importId: string, fileStorageUrl: string | null, fileName: string, accountId: string | null) => void;
+  retryingImportIds?: Set<string>;
 }
 
 export function InvestmentDataToolbar({
@@ -60,6 +62,11 @@ export function InvestmentDataToolbar({
   activeAccountId,
   onAccountSelect,
   globalSummary,
+  imports: allImports,
+  deleteImport,
+  isDeleting,
+  retryImport,
+  retryingImportIds,
 }: InvestmentDataToolbarProps) {
   const { t, i18n } = useTranslation("common");
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -99,25 +106,36 @@ export function InvestmentDataToolbar({
                 {displayCount} {t("imports.movementsCount")}
               </span>
             )}
-            {globalSummary && globalSummary.deposits > 0 && (
+            {globalSummary && globalSummary.buys > 0 && (
               <>
                 <span className="rounded-full bg-white/50" style={{ width: 3, height: 3 }} />
                 <span
                   className="tabular-nums text-white"
                   style={{ font: "600 12.5px Inter, sans-serif" }}
                 >
-                  +{formatCurrency(globalSummary.deposits)}
+                  {t("imports.buysLabel", "buys")} {formatCurrency(globalSummary.buys)}
                 </span>
               </>
             )}
-            {globalSummary && globalSummary.withdrawals > 0 && (
+            {globalSummary && globalSummary.sells > 0 && (
               <>
                 <span className="rounded-full bg-white/50" style={{ width: 3, height: 3 }} />
                 <span
                   className="tabular-nums text-white"
                   style={{ font: "600 12.5px Inter, sans-serif" }}
                 >
-                  −{formatCurrency(globalSummary.withdrawals)}
+                  {t("imports.sellsLabel", "sells")} {formatCurrency(globalSummary.sells)}
+                </span>
+              </>
+            )}
+            {globalSummary && globalSummary.dividends > 0 && (
+              <>
+                <span className="rounded-full bg-white/50" style={{ width: 3, height: 3 }} />
+                <span
+                  className="tabular-nums text-white"
+                  style={{ font: "600 12.5px Inter, sans-serif" }}
+                >
+                  {t("imports.dividendsLabel", "div")} {formatCurrency(globalSummary.dividends)}
                 </span>
               </>
             )}
@@ -305,6 +323,16 @@ export function InvestmentDataToolbar({
 
         {/* Actions */}
         <div className="flex items-center shrink-0" style={{ gap: 8 }}>
+          {allImports && allImports.length > 0 && deleteImport && (
+            <UploadedFilesDropdown
+              imports={allImports}
+              deleteImport={deleteImport}
+              isDeleting={isDeleting ?? false}
+              pendingImportIds={new Set()}
+              retryImport={retryImport}
+              retryingImportIds={retryingImportIds}
+            />
+          )}
           <button
             type="button"
             onClick={onUploadFile}

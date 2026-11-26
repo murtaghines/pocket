@@ -59,7 +59,6 @@ export const NAV_SECTIONS: NavSection[] = [
     subTabs: [
       { key: "portfolio", i18nKey: "navigation.tabs.investments.portfolio" },
       { key: "activity", i18nKey: "navigation.tabs.investments.activity" },
-      { key: "accounts", i18nKey: "navigation.tabs.investments.accounts" },
     ],
   },
   {

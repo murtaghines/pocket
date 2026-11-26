@@ -9,6 +9,7 @@ export interface InvestmentTransaction {
   user_id: string;
   holding_id: string | null;
   account_id: string | null;
+  import_id: string | null;
   type: InvestmentTxType;
   ticker: string | null;
   asset_name: string | null;
@@ -24,12 +25,22 @@ export interface InvestmentTransaction {
   created_at: string;
 }
 
-export function useInvestmentTransactions(holdingId?: string) {
+export interface UseInvestmentTransactionsOptions {
+  holdingId?: string;
+  importIds?: string[];
+  monthKey?: string;
+}
+
+export function useInvestmentTransactions(opts?: UseInvestmentTransactionsOptions | string) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  const holdingId = typeof opts === "string" ? opts : opts?.holdingId;
+  const importIds = typeof opts === "string" ? undefined : opts?.importIds;
+  const monthKey = typeof opts === "string" ? undefined : opts?.monthKey;
+
   const { data: transactions = [], isLoading } = useQuery({
-    queryKey: ["investment-transactions", user?.id, holdingId],
+    queryKey: ["investment-transactions", user?.id, holdingId, importIds, monthKey],
     queryFn: async () => {
       let query = supabase
         .from("investment_transactions")
@@ -41,9 +52,21 @@ export function useInvestmentTransactions(holdingId?: string) {
         query = query.eq("holding_id", holdingId);
       }
 
+      if (importIds && importIds.length > 0) {
+        query = query.in("import_id", importIds);
+      }
+
+      if (monthKey) {
+        const [year, month] = monthKey.split("-").map(Number);
+        const start = `${year}-${String(month).padStart(2, "0")}-01`;
+        const endDate = new Date(year, month, 0);
+        const end = `${year}-${String(month).padStart(2, "0")}-${String(endDate.getDate()).padStart(2, "0")}`;
+        query = query.gte("date", start).lte("date", end);
+      }
+
       const { data, error } = await query;
       if (error) throw error;
-      return data as InvestmentTransaction[];
+      return (data || []) as InvestmentTransaction[];
     },
     enabled: !!user,
   });
@@ -103,10 +126,26 @@ export function useInvestmentTransactions(holdingId?: string) {
     },
   });
 
+  const updateTransaction = useMutation({
+    mutationFn: async ({ id, payload }: { id: string; payload: Record<string, unknown> }) => {
+      const { error } = await supabase
+        .from("investment_transactions")
+        .update(payload)
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["investment-transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["holdings"] });
+      queryClient.invalidateQueries({ queryKey: ["portfolio-summary"] });
+    },
+  });
+
   return {
     transactions,
     isLoading,
     addTransaction,
     deleteTransaction,
+    updateTransaction,
   };
 }

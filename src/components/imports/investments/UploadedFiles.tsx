@@ -5,6 +5,8 @@ import {
   CheckCircle2,
   Trash2,
   Download,
+  Loader2,
+  RotateCcw,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
@@ -37,6 +39,8 @@ export interface UploadedFilesDropdownProps {
   deleteImport: (id: string) => void;
   isDeleting: boolean;
   pendingImportIds: Set<string>;
+  retryImport?: (importId: string, fileStorageUrl: string | null, fileName: string, accountId: string | null) => void;
+  retryingImportIds?: Set<string>;
 }
 
 export function UploadedFilesDropdown({
@@ -44,6 +48,8 @@ export function UploadedFilesDropdown({
   deleteImport,
   isDeleting,
   pendingImportIds,
+  retryImport,
+  retryingImportIds,
 }: UploadedFilesDropdownProps) {
   const { t } = useTranslation("common");
   const count = imports.length;
@@ -84,6 +90,8 @@ export function UploadedFilesDropdown({
           deleteImport={deleteImport}
           isDeleting={isDeleting}
           pendingImportIds={pendingImportIds}
+          retryImport={retryImport}
+          retryingImportIds={retryingImportIds}
         />
       </SheetContent>
     </Sheet>
@@ -97,6 +105,8 @@ export interface UploadedFilesHistoryListProps {
   deleteImport: (id: string) => void;
   isDeleting: boolean;
   pendingImportIds: Set<string>;
+  retryImport?: (importId: string, fileStorageUrl: string | null, fileName: string, accountId: string | null) => void;
+  retryingImportIds?: Set<string>;
 }
 
 export function UploadedFilesHistoryList({
@@ -104,6 +114,8 @@ export function UploadedFilesHistoryList({
   deleteImport,
   isDeleting,
   pendingImportIds,
+  retryImport,
+  retryingImportIds,
 }: UploadedFilesHistoryListProps) {
   const { t } = useTranslation("common");
   const { formatMonth } = useLocalization();
@@ -116,15 +128,15 @@ export function UploadedFilesHistoryList({
       const ids = imports.map((i) => i.id);
       if (ids.length === 0) return {} as Record<string, string[]>;
       const { data, error } = await supabase
-        .from("investments")
-        .select("upload_id, date")
-        .in("upload_id", ids);
+        .from("investment_transactions")
+        .select("import_id, date")
+        .in("import_id", ids);
       if (error) throw error;
       const map: Record<string, Set<string>> = {};
-      (data || []).forEach((row: { upload_id: string | null; date: string | null }) => {
-        if (!row.upload_id || !row.date) return;
+      (data || []).forEach((row: { import_id: string | null; date: string | null }) => {
+        if (!row.import_id || !row.date) return;
         const key = String(row.date).substring(0, 7);
-        (map[row.upload_id] ??= new Set()).add(key);
+        (map[row.import_id] ??= new Set()).add(key);
       });
       const out: Record<string, string[]> = {};
       Object.entries(map).forEach(([k, set]) => {
@@ -290,7 +302,29 @@ export function UploadedFilesHistoryList({
                 </div>
               </div>
 
-              <div className="shrink-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+              {imp.status === "FAILED" && retryImport && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="ml-auto shrink-0 h-7 gap-1 px-2 text-[11px]"
+                  disabled={retryingImportIds?.has(imp.id)}
+                  title={t("imports.retryProcessing")}
+                  onClick={() =>
+                    retryImport(imp.id, imp.file_storage_url, imp.file_name, imp.account_id)
+                  }
+                >
+                  {retryingImportIds?.has(imp.id) ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <RotateCcw className="w-3 h-3" />
+                  )}
+                  {t("imports.retry")}
+                </Button>
+              )}
+              <div className={cn(
+                "shrink-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity",
+                imp.status !== "FAILED" && "ml-auto",
+              )}>
                 {imp.file_storage_url && (
                   <a
                     href={imp.file_storage_url}

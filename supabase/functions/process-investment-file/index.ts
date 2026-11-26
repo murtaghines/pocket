@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.2";
-import { calculateInvestmentFingerprint, sha256 } from "../_shared/fingerprint.ts";
+import { sha256 } from "../_shared/fingerprint.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -347,21 +347,6 @@ IMPORTANT:
 - If no data for an array, return it as []
 `;
 
-// Legacy prompt for backward compatibility (bank statement deposit/withdrawal detection)
-const LEGACY_ANALYSIS_PROMPT = `You are a financial data extraction expert specialized in detecting investment and savings movements from bank statements. Your task is to extract ONLY transactions that represent money going INTO or OUT of investment/savings accounts.
-
-CRITICAL: Respond ONLY with a valid JSON array. No markdown, no explanation, just the JSON.
-
-For each INVESTMENT transaction, extract:
-- date: ISO format (YYYY-MM-DD)
-- description: Clean, readable description
-- amount: Absolute numeric value (always positive)
-- type: "deposit" (money going to investment) or "withdrawal" (money coming back from investment)
-- platform: The investment platform name
-- asset_type: Type of asset if identifiable (e.g., "Savings", "ETF", "Stocks", "Bonds", "Crypto", "Mixed", null if unknown)
-
-If no investment transactions are found, return: []`;
-
 // ─── Platform normalization ──────────────────────────────────────────────────
 
 function normalizePlatform(platform: string): string {
@@ -475,15 +460,13 @@ serve(async (req) => {
       importId,
       uploadId,
       previewOnly,
-      // Legacy confirm path
-      investments: reviewedInvestments,
       // Smart Import confirm path
       smartImportData,
     } = body;
     const userId = authData.user.id;
     const recordId = importId || uploadId;
 
-    if (!recordId || !userId || (!fileContent && !reviewedInvestments && !smartImportData)) {
+    if (!recordId || !userId || (!fileContent && !smartImportData)) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
@@ -491,11 +474,6 @@ serve(async (req) => {
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-    // ── Legacy confirm path (backward compat) ──────────────────────────────
-    if (reviewedInvestments && !smartImportData) {
-      return await handleLegacyConfirm(supabase, userId, recordId, reviewedInvestments, previewOnly);
-    }
 
     // ── Smart Import confirm path ──────────────────────────────────────────
     if (smartImportData) {
@@ -728,7 +706,6 @@ async function handleSmartConfirm(
   let holdingsUpdated = 0;
   let ratesSaved = 0;
   let positionsUpserted = 0;
-  let legacyDeposit = 0;
 
   // Lookup account_id from the import record
   const { data: importRecord } = await supabase
@@ -875,60 +852,13 @@ async function handleSmartConfirm(
     }
   }
 
-  // 4. Create legacy investments deposit record (for dashboard KPI "Sent to Invest")
-  const totalBuyAmount = richTransactions
-    .filter((tx: any) => tx.type === 'buy')
-    .reduce((sum: number, tx: any) => sum + (tx.quantity * tx.price_per_unit + tx.fee), 0);
-
-  if (totalBuyAmount > 0) {
-    const platform = richTransactions[0]?.platform || 'Broker';
-    const hash = await calculateInvestmentFingerprint(
-      normalizePlatform(platform),
-      new Date().toISOString().slice(0, 10),
-      totalBuyAmount,
-      `Smart import: ${txInserted} transactions`,
-    );
-
-    await supabase.from('investments').upsert({
-      user_id: userId,
-      upload_id: importId,
-      date: richTransactions[0]?.date || new Date().toISOString().slice(0, 10),
-      description: `Import: ${txInserted} transactions from ${normalizePlatform(platform)}`,
-      amount: totalBuyAmount,
-      type: 'deposit',
-      platform: normalizePlatform(platform),
-      asset_type: 'Mixed',
-      transaction_hash: hash,
-    }, { onConflict: 'user_id,transaction_hash', ignoreDuplicates: true });
-    legacyDeposit = 1;
-  }
-
-  // Also handle cash deposits/withdrawals in legacy table
-  for (const tx of cashTransactions) {
-    const platform = normalizePlatform(tx.platform || 'Broker');
-    const hash = await calculateInvestmentFingerprint(
-      platform, tx.date, tx.price_per_unit, tx.description || '',
-    );
-    await supabase.from('investments').upsert({
-      user_id: userId,
-      upload_id: importId,
-      date: tx.date,
-      description: tx.description || 'Cash movement',
-      amount: Math.abs(tx.price_per_unit * (tx.quantity || 1)),
-      type: tx.type === 'withdrawal' ? 'withdrawal' : 'deposit',
-      platform,
-      asset_type: 'Cash',
-      transaction_hash: hash,
-    }, { onConflict: 'user_id,transaction_hash', ignoreDuplicates: true });
-  }
-
-  // 5. Take portfolio snapshot
+  // 4. Take portfolio snapshot
   await supabase.rpc('take_portfolio_snapshot', { p_user_id: userId }).catch(() => {});
 
   // Update import status
   await supabase.from('imports').update({
     status: 'NORMALIZED',
-    transactions_count: txInserted + positionsUpserted + cashTransactions.length,
+    transactions_count: txInserted,
   }).eq('id', importId);
 
   const message = `Smart import: ${txInserted} transactions, ${positionsUpserted} positions, ${ratesSaved} exchange rates`;
@@ -945,96 +875,9 @@ async function handleSmartConfirm(
         holdingsUpdated,
         positionsUpserted,
         ratesSaved,
-        legacyDeposit,
       },
     }),
     { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
   );
 }
 
-// ─── Legacy confirm path (backward compat) ───────────────────────────────────
-
-async function handleLegacyConfirm(
-  supabase: any,
-  userId: string,
-  recordId: string,
-  reviewedInvestments: any[],
-  previewOnly: boolean,
-) {
-  if (!Array.isArray(reviewedInvestments)) {
-    throw new Error('investments must be an array');
-  }
-
-  const investments = reviewedInvestments;
-  console.log(`Legacy confirm for import ${recordId}: ${investments.length} investments`);
-
-  const { data: existingInvestments } = await supabase
-    .from('investments')
-    .select('transaction_hash')
-    .eq('user_id', userId)
-    .not('transaction_hash', 'is', null);
-
-  const existingHashes = new Set(existingInvestments?.map((t: any) => t.transaction_hash) || []);
-  const seenHashesInBatch = new Set<string>();
-  const newInvestments: any[] = [];
-  let duplicateCount = 0;
-  let depositCount = 0;
-  let withdrawalCount = 0;
-
-  for (const inv of investments) {
-    const platform = normalizePlatform(inv.platform || 'Unknown');
-    const hash = await calculateInvestmentFingerprint(platform, inv.date, inv.amount, inv.description || '');
-
-    if (existingHashes.has(hash) || seenHashesInBatch.has(hash)) {
-      duplicateCount++;
-      continue;
-    }
-    seenHashesInBatch.add(hash);
-
-    const type = inv.type === 'withdrawal' ? 'withdrawal' : 'deposit';
-    if (type === 'deposit') depositCount++;
-    else withdrawalCount++;
-
-    newInvestments.push({
-      user_id: userId,
-      upload_id: recordId,
-      date: inv.date,
-      description: inv.description || 'No description',
-      amount: Math.abs(inv.amount),
-      type,
-      platform,
-      asset_type: inv.asset_type || null,
-      original_text: null,
-      transaction_hash: hash,
-    });
-  }
-
-  if (!previewOnly && newInvestments.length > 0) {
-    const { error: insertError } = await supabase
-      .from('investments')
-      .upsert(newInvestments, { onConflict: 'user_id,transaction_hash', ignoreDuplicates: true });
-    if (insertError) throw new Error(`Failed to insert investments: ${insertError.message}`);
-
-    await supabase.from('imports').update({
-      status: 'NORMALIZED',
-      transactions_count: newInvestments.length,
-    }).eq('id', recordId);
-  }
-
-  return new Response(
-    JSON.stringify({
-      success: true,
-      message: `Processed ${newInvestments.length} investments`,
-      previewMode: previewOnly,
-      data: previewOnly ? newInvestments : undefined,
-      stats: {
-        newInvestments: newInvestments.length,
-        deposits: depositCount,
-        withdrawals: withdrawalCount,
-        duplicatesIgnored: duplicateCount,
-        totalParsed: investments.length,
-      },
-    }),
-    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-  );
-}
